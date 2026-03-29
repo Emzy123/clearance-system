@@ -1,0 +1,54 @@
+{
+  "info": {
+    "name": "Clearance System API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"student1@demo.edu\",\n  \"password\": \"StudentPass123!\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Student Hybrid Flow",
+      "item": [
+        { "name": "Initiate Clearance", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{baseUrl}}/students/clearance/initiate", "host": ["{{baseUrl}}"], "path": ["students", "clearance", "initiate"] } } },
+        { "name": "Get Clearance Status", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{baseUrl}}/students/clearance/status", "host": ["{{baseUrl}}"], "path": ["students", "clearance", "status"] } } },
+        { "name": "Submit Sequential (multipart)", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{baseUrl}}/students/clearance/sequential/submit/:departmentId", "host": ["{{baseUrl}}"], "path": ["students", "clearance", "sequential", "submit", ":departmentId"] } } },
+        { "name": "Eligible Parallel Departments", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{baseUrl}}/students/clearance/parallel/eligible-departments", "host": ["{{baseUrl}}"], "path": ["students", "clearance", "parallel", "eligible-departments"] } } }
+      ]
+    },
+    {
+      "name": "Staff Hybrid Decisions",
+      "item": [
+        { "name": "Pending (Sequential + Parallel)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{baseUrl}}/staff/pending", "host": ["{{baseUrl}}"], "path": ["staff", "pending"] } } },
+        { "name": "Approve Sequential", "request": { "method": "PUT", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }], "url": { "raw": "{{baseUrl}}/staff/sequential/approve/:clearanceId", "host": ["{{baseUrl}}"], "path": ["staff", "sequential", "approve", ":clearanceId"] }, "body": { "mode": "raw", "raw": "{\n  \"remarks\": \"Approved\"\n}" } } },
+        { "name": "Approve Parallel", "request": { "method": "PUT", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }], "url": { "raw": "{{baseUrl}}/staff/parallel/approve/:clearanceId", "host": ["{{baseUrl}}"], "path": ["staff", "parallel", "approve", ":clearanceId"] }, "body": { "mode": "raw", "raw": "{\n  \"remarks\": \"Approved\"\n}" } } }
+      ]
+    },
+    {
+      "name": "Admin Hybrid Config",
+      "item": [
+        { "name": "Get Departments", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{baseUrl}}/admin/departments", "host": ["{{baseUrl}}"], "path": ["admin", "departments"] } } },
+        { "name": "Reorder Sequential", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }], "url": { "raw": "{{baseUrl}}/admin/departments/reorder", "host": ["{{baseUrl}}"], "path": ["admin", "departments", "reorder"] }, "body": { "mode": "raw", "raw": "{\n  \"departmentIds\": [\"<id1>\", \"<id2>\", \"<id3>\"]\n}" } } },
+        { "name": "Move Department Between Phases", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }], "url": { "raw": "{{baseUrl}}/admin/departments/phase/move", "host": ["{{baseUrl}}"], "path": ["admin", "departments", "phase", "move"] }, "body": { "mode": "raw", "raw": "{\n  \"departmentId\": \"<id>\",\n  \"phaseType\": \"parallel\"\n}" } } },
+        { "name": "Export Sequential Progress", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{baseUrl}}/admin/reports/sequential-progress", "host": ["{{baseUrl}}"], "path": ["admin", "reports", "sequential-progress"] } } },
+        { "name": "Export Parallel Progress", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{baseUrl}}/admin/reports/parallel-progress", "host": ["{{baseUrl}}"], "path": ["admin", "reports", "parallel-progress"] } } }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "token", "value": "" }
+  ]
+}
+
