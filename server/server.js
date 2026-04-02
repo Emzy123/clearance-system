@@ -62,11 +62,8 @@ app.use("/api/admin/analytics", analyticsRoutes);
 app.use("/api/documents", documentRoutes);
 
 if (process.env.NODE_ENV === "production") {
-  const clientDist = path.join(__dirname, "../client/dist");
-  app.use(express.static(clientDist));
-  app.get("*", (req, res, next) => {
-    if (req.path.startsWith("/api")) return next();
-    res.sendFile(path.join(clientDist, "index.html"));
+  app.get("/", (req, res) => {
+    res.json({ message: "Clearance System API is running." });
   });
 }
 
