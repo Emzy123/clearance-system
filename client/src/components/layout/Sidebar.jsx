@@ -28,6 +28,8 @@ export default function Sidebar() {
   const role = user?.role;
   const items = role ? navByRole[role] || [] : [];
 
+  if (items.length === 0) return null;
+
   return (
     <aside className="hidden md:block w-64 shrink-0 border-r border-slate-200/70 dark:border-slate-800 bg-white/40 dark:bg-slate-950/20 backdrop-blur-glass">
       <nav className="p-4 space-y-1">

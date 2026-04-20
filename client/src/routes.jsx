@@ -4,6 +4,8 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 import StaffDepartmentGuard from "./components/common/StaffDepartmentGuard";
 import Loader from "./components/common/Loader";
 
+const Home = lazy(() => import("./pages/public/Home"));
+const HowItWorks = lazy(() => import("./pages/public/HowItWorks"));
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
@@ -36,7 +38,8 @@ export const routes = [
     path: "/",
     element: <Layout />,
     children: [
-      { index: true, element: withSuspense(<Login />) },
+      { index: true, element: withSuspense(<Home />) },
+      { path: "how-it-works", element: withSuspense(<HowItWorks />) },
       { path: "login", element: withSuspense(<Login />) },
       { path: "register", element: withSuspense(<Register />) },
       { path: "forgot-password", element: withSuspense(<ForgotPassword />) },
