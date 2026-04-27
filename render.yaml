@@ -1,0 +1,37 @@
+# Render Deployment Configuration
+services:
+  # Backend API Service
+  - type: web
+    name: clearance-system-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+        length: 64
+      - key: JWT_EXPIRE
+        value: 7d
+      - key: CLIENT_URL
+        sync: false
+
+  # Frontend Service
+  - type: web
+    name: clearance-system-frontend
+    runtime: static
+    plan: free
+    rootDir: client/dist
+    buildCommand: cd client && npm install && npm run build
+    envVars:
+      - key: VITE_API_URL
+        value: https://clearance-system-api.onrender.com/api
+      - key: VITE_SOCKET_URL
+        value: https://clearance-system-api.onrender.com

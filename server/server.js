@@ -31,11 +31,20 @@ app.use(mongoSanitize());
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-const allowedOrigin = process.env.CLIENT_URL || "http://localhost:5173";
+const allowedOrigins = [
+  process.env.CLIENT_URL || "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5175",
+  "https://clearance-system-frontend.onrender.com",
+  "https://clearance-system.onrender.com"
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: [allowedOrigin],
-    credentials: true
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
 
