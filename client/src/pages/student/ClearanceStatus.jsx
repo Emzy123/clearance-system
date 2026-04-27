@@ -9,7 +9,8 @@ import {
   initiateClearance,
   submitParallelBulk,
   submitParallelSingle,
-  submitSequential
+  submitSequential,
+  downloadCertificateUrl
 } from "../../services/studentService";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../components/common/Toast";
@@ -109,6 +110,26 @@ export default function ClearanceStatus() {
       })
   });
 
+  const downloadCertificateM = useMutation({
+    mutationFn: () => downloadCertificateUrl(token),
+    onSuccess: (blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `clearance-certificate-${clearance?.matricNumber || "student"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.push({ type: "success", message: "Certificate downloaded successfully" });
+    },
+    onError: (err) =>
+      toast.push({
+        type: "error",
+        message: err?.response?.data?.error?.message || "Failed to download certificate"
+      })
+  });
+
   useEffect(() => {
     if (!token || !user) return undefined;
 
@@ -142,8 +163,8 @@ export default function ClearanceStatus() {
   const parPct = parSubs.length ? Math.round((parSubs.filter((s) => s.status === "approved").length / parSubs.length) * 100) : 100;
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h2 className="text-xl font-semibold">Clearance Status</h2>
           <p className="text-sm text-slate-600 dark:text-slate-300">
@@ -151,8 +172,17 @@ export default function ClearanceStatus() {
           </p>
         </div>
         {!clearance ? (
-          <Button onClick={() => initiateM.mutate()} disabled={initiateM.isPending}>
+          <Button onClick={() => initiateM.mutate()} disabled={initiateM.isPending} className="w-full sm:w-auto">
             {initiateM.isPending ? "Starting..." : "Initiate clearance"}
+          </Button>
+        ) : clearance.status === "approved" ? (
+          <Button 
+            variant="secondary" 
+            onClick={() => downloadCertificateM.mutate()} 
+            disabled={downloadCertificateM.isPending}
+            className="w-full sm:w-auto"
+          >
+            {downloadCertificateM.isPending ? "Downloading..." : "Download Certificate"}
           </Button>
         ) : null}
       </div>

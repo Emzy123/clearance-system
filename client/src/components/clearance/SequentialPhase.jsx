@@ -6,7 +6,7 @@ export default function SequentialPhase({ submissions = [], currentStage = 0, on
     <Card>
       <div className="space-y-3">
         <h3 className="font-semibold text-brand-secondary">Sequential Phase</h3>
-        <div className="grid md:grid-cols-3 gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {submissions.map((s, idx) => (
             <div key={`seq-${idx}-${String(s.departmentId?._id ?? s.departmentId ?? s.departmentName ?? "dept")}`} className="rounded-lg border border-slate-200/60 dark:border-slate-700 p-3">
               <div className="text-sm font-medium">{idx + 1}. {s.departmentName || s.departmentId?.name}</div>

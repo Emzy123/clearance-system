@@ -38,7 +38,16 @@ const studentSchemas = {
     .object({
       departmentIds: z.union([z.array(z.string().min(1)), z.string().min(1)])
     })
-    .passthrough()
+    .passthrough(),
+  fileUpload: z.object({
+    departmentId: z.string().min(1),
+    file: z.any().refine((file) => file, "File is required")
+      .refine((file) => file.size <= 10 * 1024 * 1024, "File size must be less than 10MB")
+      .refine((file) => {
+        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        return allowedTypes.includes(file.mimetype);
+      }, "Only PDF, JPG, PNG, and Word documents are allowed")
+  })
 };
 
 const staffSchemas = {
