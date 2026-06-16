@@ -47,13 +47,28 @@ async function getProfile(req, res) {
 
 async function updateProfile(req, res, next) {
   try {
-    const allowed = ["name", "profilePicture"];
+    const allowed = [
+      "name",
+      "profilePicture",
+      "department",
+      "faculty",
+      "matricNumber",
+      "yearOfAdmission",
+      "yearOfGraduation",
+      "classOfDegree"
+    ];
     const updates = {};
     for (const k of allowed) if (req.body[k] !== undefined) updates[k] = req.body[k];
 
     const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true }).select(
       "-password"
     );
+    if (updates.matricNumber) {
+      await ClearanceRequest.updateMany(
+        { studentId: user._id },
+        { $set: { matricNumber: updates.matricNumber } }
+      );
+    }
     await writeAudit(req, { action: "student.update_profile", target: "users", targetId: user._id });
     res.json({ success: true, data: { user } });
   } catch (err) {
@@ -95,12 +110,12 @@ async function initiateClearance(req, res, next) {
       return res.json({ success: true, data: { clearance: existing } });
     }
 
-    const { sequential, parallel } = await getDepartmentPhases();
-    if (sequential.length === 0 && parallel.length === 0) {
+    const { sequential } = await getDepartmentPhases();
+    if (sequential.length === 0) {
       res.status(400);
       throw new Error("No active departments configured");
     }
-    const phaseData = buildInitialPhases(sequential, parallel);
+    const phaseData = buildInitialPhases(sequential);
 
     const clearance = await ClearanceRequest.create({
       studentId: student._id,

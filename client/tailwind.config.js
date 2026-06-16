@@ -4,15 +4,15 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]
+        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["Outfit", "Inter", "ui-sans-serif", "system-ui", "sans-serif"]
       },
       colors: {
         brand: {
-          primary: "#1E3A8A",
-          secondary: "#14B8A6",
-          parallel: "#8B5CF6",
-          accent: "#F59E0B",
-          bg: "#F9FAFB",
+          primary: "#5C2C16",
+          secondary: "#D4AF37",
+          accent: "#A0522D",
+          bg: "#FAF7F4",
           text: "#1F2937"
         }
       },

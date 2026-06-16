@@ -12,7 +12,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-30 border-b border-slate-200/70 dark:border-slate-800 bg-white/60 dark:bg-slate-950/40 backdrop-blur-glass">
       <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <Link to="/" className="font-semibold text-brand-primary text-lg">Clearance System</Link>
+          <Link to="/" className="font-display font-bold text-brand-primary text-xl tracking-tight">CUSTECH Clearance</Link>
 
           {!auth?.isAuthed && (
             <nav className="hidden md:flex items-center gap-4 text-sm font-medium text-slate-600 dark:text-slate-300">

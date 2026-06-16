@@ -6,6 +6,7 @@ const AuditLog = require("../models/AuditLog");
 const { emitToUser } = require("../utils/socket");
 const Document = require("../models/Document");
 const { decideSequential, decideParallel, extractId } = require("../utils/clearanceFlow");
+const { sendEmail, getTemplateHtml, renderTemplate } = require("../utils/emailService");
 
 async function writeAudit(req, { action, target, targetId, details }) {
   await AuditLog.create({
@@ -87,6 +88,8 @@ async function decide(req, res, next, { phase, approved }) {
       throw new Error("Clearance request not found");
     }
 
+    const student = await User.findById(clearance.studentId).lean();
+
     const docCount = await Document.countDocuments({
       clearanceId: clearance._id,
       departmentId: dept._id,
@@ -155,6 +158,85 @@ async function decide(req, res, next, { phase, approved }) {
       targetId: clearance._id,
       details: { departmentId: dept._id, phase, remarks }
     });
+
+    if (student?.email) {
+      const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+      const loginUrl = `${clientUrl}/login`;
+      const remarksText = remarks
+        ? `<p style="font-size: 14px; color: #475569; line-height: 1.6;"><strong>Feedback/Remarks:</strong> "${remarks}"</p>`
+        : "";
+
+      const subject = approved
+        ? `CUSTECH Clearance: ${dept.name} Approved`
+        : `CUSTECH Clearance Action Required: ${dept.name} Rejected`;
+
+      const fallbackHtml = approved
+        ? `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+  <div style="background-color: #5C2C16; padding: 24px; text-align: center; border-bottom: 4px solid #D4AF37;">
+    <h2 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: bold; letter-spacing: 0.5px;">CUSTECH Clearance Portal</h2>
+  </div>
+  <div style="padding: 24px; background-color: #ffffff;">
+    <p style="font-size: 16px; color: #1e293b; margin-top: 0;">Dear <strong>{{name}}</strong>,</p>
+    <p style="font-size: 14px; color: #475569; line-height: 1.6;">
+      We are pleased to inform you that your clearance submission for the <strong>{{departmentName}}</strong> department has been reviewed and <strong>APPROVED</strong>.
+    </p>
+    {{remarksSection}}
+    <div style="margin: 24px 0; text-align: center;">
+      <a href="{{loginUrl}}" style="background-color: #5C2C16; color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 6px; border: 1px solid #5C2C16; display: inline-block; transition: background 0.2s;">
+        Go to Clearance Dashboard
+      </a>
+    </div>
+    <p style="font-size: 12px; color: #94a3b8; line-height: 1.4; margin-bottom: 0;">
+      Please do not reply directly to this email. If you have any questions, please contact the respective department or the academic affairs division.
+    </p>
+  </div>
+  <div style="background-color: #f8fafc; padding: 16px; text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid #f1f5f9;">
+    Confluence University of Science and Technology (CUSTECH), Osara
+  </div>
+</div>`
+        : `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+  <div style="background-color: #5C2C16; padding: 24px; text-align: center; border-bottom: 4px solid #D4AF37;">
+    <h2 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: bold; letter-spacing: 0.5px;">CUSTECH Clearance Portal</h2>
+  </div>
+  <div style="padding: 24px; background-color: #ffffff;">
+    <p style="font-size: 16px; color: #1e293b; margin-top: 0;">Dear <strong>{{name}}</strong>,</p>
+    <p style="font-size: 14px; color: #475569; line-height: 1.6;">
+      Your clearance submission for the <strong>{{departmentName}}</strong> department was reviewed and has been <strong>REJECTED</strong>.
+    </p>
+    {{remarksSection}}
+    <p style="font-size: 14px; color: #475569; line-height: 1.6;">
+      Please log in to your dashboard to view the feedback, correct any issues, and re-submit the required documents.
+    </p>
+    <div style="margin: 24px 0; text-align: center;">
+      <a href="{{loginUrl}}" style="background-color: #5C2C16; color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 6px; border: 1px solid #5C2C16; display: inline-block; transition: background 0.2s;">
+        Go to Clearance Dashboard
+      </a>
+    </div>
+    <p style="font-size: 12px; color: #94a3b8; line-height: 1.4; margin-bottom: 0;">
+      Please do not reply directly to this email. If you have any questions, please contact the respective department or the academic affairs division.
+    </p>
+  </div>
+  <div style="background-color: #f8fafc; padding: 16px; text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid #f1f5f9;">
+    Confluence University of Science and Technology (CUSTECH), Osara
+  </div>
+</div>`;
+
+      const templateKey = approved ? "email.clearance_approved.html" : "email.clearance_rejected.html";
+
+      getTemplateHtml(templateKey, fallbackHtml)
+        .then((tpl) => {
+          const html = renderTemplate(tpl, {
+            name: student.name,
+            departmentName: dept.name,
+            remarksSection: remarksText,
+            loginUrl
+          });
+          return sendEmail({ to: student.email, subject, html });
+        })
+        .catch((err) => {
+          console.error("Email notification failed:", err);
+        });
+    }
 
     res.json({ success: true, data: { clearance } });
   } catch (err) {

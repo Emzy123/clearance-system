@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
@@ -22,18 +22,21 @@ export default function Settings() {
   );
   const [portalEnabled, setPortalEnabled] = useState(true);
 
-  useQuery({
+  const settingsQ = useQuery({
     queryKey: ["admin-settings-templates"],
     queryFn: () => getSettings(token, [WELCOME_KEY, RESET_KEY, PORTAL_KEY]),
-    enabled: Boolean(token),
-    onSuccess: (data) => {
-      for (const item of data.items || []) {
+    enabled: Boolean(token)
+  });
+
+  useEffect(() => {
+    if (settingsQ.data?.items) {
+      for (const item of settingsQ.data.items) {
         if (item.key === WELCOME_KEY && typeof item.value === "string") setWelcomeHtml(item.value);
         if (item.key === RESET_KEY && typeof item.value === "string") setResetHtml(item.value);
         if (item.key === PORTAL_KEY) setPortalEnabled(item.value !== false);
       }
     }
-  });
+  }, [settingsQ.data]);
 
   const m = useMutation({
     mutationFn: () =>

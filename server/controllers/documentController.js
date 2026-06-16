@@ -7,7 +7,10 @@ const { openDownloadStream } = require("../utils/gridfs");
 
 async function downloadDocument(req, res, next) {
   try {
-    const doc = await Document.findById(req.params.id).lean();
+    let doc = await Document.findById(req.params.id).lean();
+    if (!doc) {
+      doc = await Document.findOne({ "metadata.fileId": req.params.id }).lean();
+    }
     if (!doc) {
       res.status(404);
       throw new Error("Document not found");

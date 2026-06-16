@@ -63,6 +63,12 @@ export async function downloadCertificateUrl(token) {
   return res.data;
 }
 
+export async function downloadDocumentFile(token, docId) {
+  const api = createApi(token);
+  const res = await api.get(`/documents/${docId}/download`, { responseType: "blob" });
+  return res.data;
+}
+
 export async function getNotifications(token) {
   const api = createApi(token);
   const res = await api.get("/students/notifications");

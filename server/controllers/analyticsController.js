@@ -7,37 +7,50 @@ async function getAnalytics(req, res, next) {
     const approved = await ClearanceRequest.countDocuments({ status: "approved" });
     const completionRate = total === 0 ? 0 : Math.round((approved / total) * 100);
 
-    const deptList = await Department.find({ isActive: true }).sort({ clearanceOrder: 1 }).lean();
+    const deptList = await Department.find({ isActive: true }).sort({ "phase.order": 1, clearanceOrder: 1 }).lean();
     const departmentStats = [];
 
     for (const d of deptList) {
       const pending = await ClearanceRequest.countDocuments({
-        $or: [
-          { "sequentialPhase.submissions": { $elemMatch: { departmentId: d._id, status: "pending" } } },
-          { "parallelPhase.submissions": { $elemMatch: { departmentId: d._id, status: "pending" } } }
-        ],
-        status: { $in: ["pending", "in_progress", "partial_sequential", "parallel_pending"] }
+        "sequentialPhase.submissions": { $elemMatch: { departmentId: d._id, status: "pending" } },
+        status: { $in: ["pending", "in_progress", "partial_sequential", "rejected"] }
       });
       const approvedForDept = await ClearanceRequest.countDocuments({
-        $or: [
-          { "sequentialPhase.submissions": { $elemMatch: { departmentId: d._id, status: "approved" } } },
-          { "parallelPhase.submissions": { $elemMatch: { departmentId: d._id, status: "approved" } } }
-        ]
+        "sequentialPhase.submissions": { $elemMatch: { departmentId: d._id, status: "approved" } }
       });
+      const activeCount = await ClearanceRequest.countDocuments({
+        status: { $in: ["pending", "in_progress", "partial_sequential", "rejected"] },
+        "sequentialPhase.isCompleted": false,
+        $expr: {
+          $eq: [
+            {
+              $arrayElemAt: [
+                "$sequentialPhase.submissions.departmentId",
+                "$sequentialPhase.currentStage"
+              ]
+            },
+            d._id
+          ]
+        }
+      });
+
       departmentStats.push({
         departmentId: d._id,
         name: d.name,
         code: d.code,
-        phase: d.phase?.type || "parallel",
+        phase: "sequential",
         pending,
-        approved: approvedForDept
+        approved: approvedForDept,
+        activeCount
       });
     }
 
-    const [studentsInSequentialPhase, studentsInParallelPhase] = await Promise.all([
-      ClearanceRequest.countDocuments({ "sequentialPhase.isCompleted": false }),
-      ClearanceRequest.countDocuments({ "parallelPhase.canSubmit": true, status: { $ne: "approved" } })
-    ]);
+    const activeRequests = await ClearanceRequest.countDocuments({
+      status: { $in: ["pending", "in_progress", "partial_sequential"] }
+    });
+    const rejectedRequests = await ClearanceRequest.countDocuments({
+      status: "rejected"
+    });
 
     // Trend by day (last 14 days) based on createdAt approvals count.
     const from = new Date();
@@ -63,8 +76,10 @@ async function getAnalytics(req, res, next) {
           totalRequests: total,
           approvedRequests: approved,
           completionRate,
-          studentsInSequentialPhase,
-          studentsInParallelPhase
+          studentsInSequentialPhase: activeRequests,
+          studentsInParallelPhase: rejectedRequests,
+          activeRequests,
+          rejectedRequests
         },
         departmentStats,
         trend: trendAgg.map((t) => ({ date: t._id, total: t.total, approved: t.approved }))

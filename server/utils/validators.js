@@ -29,8 +29,13 @@ const authSchemas = {
 const studentSchemas = {
   updateProfile: z.object({
     name: z.string().min(2).max(120).optional(),
-    department: z.string().min(2).max(120).optional(),
-    profilePicture: z.string().url().optional()
+    department: z.string().max(120).optional(),
+    profilePicture: z.string().optional(),
+    faculty: z.string().max(120).optional(),
+    matricNumber: z.string().max(50).optional(),
+    yearOfAdmission: z.string().max(50).optional(),
+    yearOfGraduation: z.string().max(50).optional(),
+    classOfDegree: z.string().max(120).optional()
   }),
   initiateClearance: z.object({}).strict(),
   markNotificationRead: z.object({}).strict(),

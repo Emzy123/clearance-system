@@ -149,6 +149,14 @@ export const routes = [
         )
       },
       {
+        path: "admin/report",
+        element: (
+          <ProtectedRoute allowRoles={["admin"]}>
+            {withSuspense(<AdminReports />)}
+          </ProtectedRoute>
+        )
+      },
+      {
         path: "admin/settings",
         element: (
           <ProtectedRoute allowRoles={["admin"]}>

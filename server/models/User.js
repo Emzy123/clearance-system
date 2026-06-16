@@ -10,6 +10,10 @@ const userSchema = new mongoose.Schema(
     staffId: { type: String, trim: true, index: true },
     department: { type: String, trim: true },
     profilePicture: { type: String },
+    faculty: { type: String, trim: true },
+    yearOfAdmission: { type: String, trim: true },
+    yearOfGraduation: { type: String, trim: true },
+    classOfDegree: { type: String, trim: true },
     isActive: { type: Boolean, default: true }
   },
   { timestamps: true }

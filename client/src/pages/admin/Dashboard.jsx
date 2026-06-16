@@ -5,7 +5,6 @@ import Card from "../../components/common/Card";
 import Loader from "../../components/common/Loader";
 import LineChart from "../../components/charts/LineChart";
 import DepartmentPerformanceChart from "../../components/charts/DepartmentPerformanceChart";
-import PhaseBreakdownChart from "../../components/charts/PhaseBreakdownChart";
 import HybridAnalytics from "../../components/admin/HybridAnalytics";
 
 export default function Dashboard() {
@@ -23,37 +22,26 @@ export default function Dashboard() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h2 className="text-xl font-semibold">Admin Dashboard</h2>
-        <p className="text-sm text-slate-600 dark:text-slate-300">System analytics overview.</p>
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Admin Dashboard</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Real-time clearance tracking and analytics for Confluence University of Science and Technology.
+        </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-4">
-        <Card>
-          <div className="text-sm text-slate-600 dark:text-slate-300">Total requests</div>
-          <div className="text-2xl font-semibold">{metrics?.totalRequests ?? 0}</div>
-        </Card>
-        <Card>
-          <div className="text-sm text-slate-600 dark:text-slate-300">Approved</div>
-          <div className="text-2xl font-semibold">{metrics?.approvedRequests ?? 0}</div>
-        </Card>
-        <Card>
-          <div className="text-sm text-slate-600 dark:text-slate-300">Completion rate</div>
-          <div className="text-2xl font-semibold">{metrics?.completionRate ?? 0}%</div>
-        </Card>
-      </div>
       <HybridAnalytics metrics={metrics} />
 
-      <div className="grid lg:grid-cols-2 gap-4">
-        <Card>
-          <div className="font-semibold mb-3">Clearance completion trend</div>
+      <div className="grid lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-1 shadow-sm">
+          <div className="font-semibold mb-3 text-slate-700 dark:text-slate-300">Clearance Approvals Trend</div>
+          <p className="text-xs text-slate-400 mb-4">Daily approvals over the last 14 days.</p>
           <LineChart data={trend || []} yKey="approved" />
         </Card>
-        <Card>
-          <div className="font-semibold mb-3">Phase breakdown</div>
-          <PhaseBreakdownChart metrics={metrics} />
-        </Card>
-        <Card className="lg:col-span-2">
-          <div className="font-semibold mb-3">Department pending vs approved</div>
+        
+        <Card className="lg:col-span-2 shadow-sm">
+          <div className="font-semibold mb-3 text-slate-700 dark:text-slate-300">Department stage metrics</div>
+          <p className="text-xs text-slate-400 mb-4">
+            Comparison of cleared, pending action, and current active students at each stage.
+          </p>
           <DepartmentPerformanceChart data={departmentStats || []} />
         </Card>
       </div>

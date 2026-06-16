@@ -38,7 +38,7 @@ async function getDepartmentPhases() {
   return { departments, sequential, parallel };
 }
 
-function buildInitialPhases(sequential, parallel) {
+function buildInitialPhases(sequential) {
   return {
     sequentialPhase: {
       isCompleted: sequential.length === 0,
@@ -47,37 +47,27 @@ function buildInitialPhases(sequential, parallel) {
         departmentId: d._id,
         departmentName: d.name,
         order: idx + 1,
-        status: "pending",
+        status: "not_started",
         remarks: "",
         documents: [],
         resubmissionCount: 0
       }))
     },
+    // Parallel phase is kept in schema for backward compat but is always empty.
     parallelPhase: {
-      // Parallel submissions are always open; departments can be submitted independently.
-      isActive: true,
-      canSubmit: true,
-      submissions: parallel.map((d) => ({
-        departmentId: d._id,
-        departmentName: d.name,
-        status: "not_started",
-        remarks: "",
-        documents: []
-      }))
+      isActive: false,
+      canSubmit: false,
+      submissions: []
     }
   };
 }
 
 function calculateProgress(clearance) {
   const seqTotal = clearance.sequentialPhase?.submissions?.length || 0;
-  const parTotal = clearance.parallelPhase?.submissions?.length || 0;
   const seqApproved =
     clearance.sequentialPhase?.submissions?.filter((s) => s.status === "approved").length || 0;
-  const parApproved =
-    clearance.parallelPhase?.submissions?.filter((s) => s.status === "approved").length || 0;
-  const seqScore = seqTotal ? (seqApproved / seqTotal) * 50 : 50;
-  const parScore = parTotal ? (parApproved / parTotal) * 50 : 50;
-  return Math.round(seqScore + parScore);
+  if (seqTotal === 0) return 100;
+  return Math.round((seqApproved / seqTotal) * 100);
 }
 
 function currentSequentialSubmission(clearance) {
@@ -87,21 +77,16 @@ function currentSequentialSubmission(clearance) {
 
 function applyTopLevelStatus(clearance) {
   const seqItems = clearance.sequentialPhase?.submissions || [];
-  const parItems = clearance.parallelPhase?.submissions || [];
   const seqRejected = seqItems.some((s) => s.status === "rejected");
-  const parRejected = parItems.some((s) => s.status === "rejected");
-  if (seqRejected || parRejected) {
+  if (seqRejected) {
     clearance.status = "rejected";
     clearance.overallProgress = calculateProgress(clearance);
     return;
   }
 
-  const seqDone = seqItems.every((s) => s.status === "approved");
-  const parDone = parItems.length === 0 || parItems.every((s) => s.status === "approved");
-  if (seqDone && parDone) {
+  const seqDone = seqItems.length > 0 && seqItems.every((s) => s.status === "approved");
+  if (seqDone) {
     clearance.status = "approved";
-  } else if (seqDone) {
-    clearance.status = "parallel_pending";
   } else if (seqItems.some((s) => s.status === "approved")) {
     clearance.status = "partial_sequential";
   } else {
@@ -117,6 +102,8 @@ function addSequentialDocument(clearance, departmentId, documentRef) {
   const currentDeptId = extractId(current.departmentId);
   if (!currentDeptId || currentDeptId !== extractId(departmentId)) return false;
   current.documents.push(mapDocumentRef(documentRef));
+  // Mark as pending so staff can see and act on the submission
+  current.status = "pending";
   if (current.documents.length > 1) current.resubmissionCount += 1;
   current.lastResubmissionAt = new Date();
   return true;
@@ -149,10 +136,8 @@ function decideSequential(clearance, staffUserId, remarks, approved) {
   const nextIndex = (clearance.sequentialPhase.currentStage || 0) + 1;
   if (nextIndex >= clearance.sequentialPhase.submissions.length) {
     clearance.sequentialPhase.isCompleted = true;
-    clearance.parallelPhase.isActive = true;
-    clearance.parallelPhase.canSubmit = true;
     applyTopLevelStatus(clearance);
-    return { movedToParallel: true, done: true };
+    return { movedToParallel: false, done: true };
   }
 
   clearance.sequentialPhase.currentStage = nextIndex;

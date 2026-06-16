@@ -14,7 +14,7 @@ const sequentialSubmissionSchema = new mongoose.Schema(
     departmentId: { type: mongoose.Schema.Types.ObjectId, ref: "Department", required: true },
     departmentName: { type: String, required: true, trim: true },
     order: { type: Number, required: true, min: 1 },
-    status: { type: String, enum: ["pending", "approved", "rejected", "skipped"], default: "pending" },
+    status: { type: String, enum: ["pending", "approved", "rejected", "skipped", "not_started"], default: "not_started" },
     remarks: { type: String, default: "", maxlength: 2000 },
     approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     approvedAt: { type: Date },
